@@ -1,0 +1,126 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{ADDAA730-CFB3-4701-A6AD-148201FCD10B}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Performance</RootNamespace>
+    <AssemblyName>Performance</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Sanford.Collections">
+      <HintPath>..\RolandMIDIExController\bin\Debug\netcoreapp3.1\lib\Sanford.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="Sanford.Multimedia">
+      <HintPath>..\RolandMIDIExController\bin\Debug\netcoreapp3.1\lib\Sanford.Multimedia.dll</HintPath>
+    </Reference>
+    <Reference Include="Sanford.Multimedia.Midi">
+      <HintPath>..\RolandMIDIExController\bin\Debug\netcoreapp3.1\lib\Sanford.Multimedia.Midi.dll</HintPath>
+    </Reference>
+    <Reference Include="Sanford.Multimedia.Timers">
+      <HintPath>..\RolandMIDIExController\bin\Debug\netcoreapp3.1\lib\Sanford.Multimedia.Timers.dll</HintPath>
+    </Reference>
+    <Reference Include="Sanford.Threading">
+      <HintPath>..\RolandMIDIExController\bin\Debug\netcoreapp3.1\lib\Sanford.Threading.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Arch\IInstrimentCommandInterface.cs" />
+    <Compile Include="Arch\IMidiInOutInterface.cs" />
+    <Compile Include="Arch\InstrumentMIDIMessages.cs" />
+    <Compile Include="Arch\IPerformanceMIDIInOutInterface.cs" />
+    <Compile Include="IRolandXP50CommandsEditInterface.cs" />
+    <Compile Include="Arch\MidiEvents.cs" />
+    <Compile Include="Arch\MidiInOutDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Arch\MidiInOutDialog.designer.cs">
+      <DependentUpon>MidiInOutDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Arch\MIDIMessageProcessor.cs" />
+    <Compile Include="Arch\MIDIMessages.cs" />
+    <Compile Include="Arch\PreprocessorCommandsClass.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Arch\RolandXP50Class.cs" />
+    <Compile Include="RolandXP50Commands.cs" />
+    <Compile Include="RolandXP50Constants.cs" />
+    <Compile Include="RolandXP50Data.cs" />
+    <Compile Include="RolandXP50DataSegmentClass.cs" />
+    <Compile Include="RolandXP50Performance.cs" />
+    <Compile Include="RolandXP50SongFastCommandClass.cs" />
+    <Compile Include="Arch\SanfordMidiDevice.cs" />
+    <Compile Include="SegmentManager.cs" />
+    <Compile Include="TestClass.cs" />
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Arch\MidiInOutDialog.resx">
+      <DependentUpon>MidiInOutDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
