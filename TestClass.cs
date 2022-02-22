@@ -18,6 +18,15 @@ namespace SynthLiveMidiController
             Console.WriteLine();
             //========================================================================
         }
+
+        public static void PrintArray(byte[] buffer)
+        {
+            foreach (byte bt in buffer)
+            {
+                Console.Write("{0:X2} ", bt);
+            }
+            Console.WriteLine();
+        }
     }
 }
 

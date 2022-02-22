@@ -1,226 +1,362 @@
 ﻿using System;
-using System.Text;
-using System.Runtime.InteropServices;
 using SynthLiveMidiController.MIDIMessages;
 using System.Collections.Generic;
 
 namespace SynthLiveMidiController.InstrumentList.Roland.XP50
 {
-    //Dictionary<int, OneParameterFieldManager> parameters;
-    //--------------------------------  One Fiel Manager  -------------------------------------
-    class OneParameterFieldManager
+    //--------------------------------  One Field Manager  -------------------------------------
+    public class OneParameterFieldManager<T> where T : Enum
     {
+        readonly string name = "";
         readonly int offset = 0;
         readonly int length = 1;
+        readonly T parameter;
         readonly byte[] parameterValue;
 
-        public OneParameterFieldManager(int os, int len)
+        public string Name { get { return name; } }
+        public int Offset { get { return offset; } }
+        public int Length { get { return length; } }
+        public T Parameter { get { return parameter; } }
+        public byte[] ParameterValue
         {
+            //get { return parameterValue; }
+            get
+            {
+                byte[] res = new byte[length];
+                for (int i = 0; i < length; i++)
+                {
+                    res[i] = parameterValue[i];
+                }
+                return res;
+            }
+            set
+            {
+                for (int i = 0; i < length; i++)
+                {
+                    parameterValue[i] = value[i];
+                }
+            }
+        }
+
+        public OneParameterFieldManager(T par, int os, int len)
+        {
+            name = Enum.GetName(typeof(T), par);
             length = len;
             offset = os;
+            parameter = par;
             parameterValue = new byte[len];
         }
     }
 
-    // -----------------------------------------------  Data Segment Base Class  ---------------------------------------------------------------------
-    abstract class DataSegmentClass
+    //                                                      SEGMENT_BUFFER                                                                      |
+    //==========================================================================================================================================|
+    class SEGMENT_BUFFER
     {
-        // Main Segment Address
-        protected readonly uint segmentAddress;
-
-        // Parameters Collection
-        protected Dictionary<int, OneParameterFieldManager> parameters;
-
-        // Main segment address getter
-        public uint SegmentAddress { get { return segmentAddress; } }   
-
-        // Segment data length
-        public abstract uint Length { get; }
-
-        // Segment data to byte array
-        public abstract byte[] ToByteArray();
-
-        // Base Constructor
-        protected DataSegmentClass(uint addr)
+        private readonly int length;
+        // buffer
+        private byte[] buffer;
+        // Buffer
+        public byte[] Buffer
         {
-            segmentAddress = addr;
+            get { return buffer; }
         }
-
-        // Send segment data to device
-        public abstract void SendData(IPerformanceMIDIInOutInterface commander);
-
-        // Request segment data from device via Callback events
-        public abstract void RequestData(IPerformanceMIDIInOutInterface commander);
+        // Length
+        public int Length
+        {
+            get { return length; }
+        }
+        // Indexator
+        public byte this[int index]
+        {
+            get { return buffer[index]; }
+        }
+        // Constructor
+        public SEGMENT_BUFFER(int len)
+        {
+            length = len;
+            buffer = new byte[length];
+        }
     }
 
-    // ---------------------------------------------  Performance Common Data Class  -----------------------------------------------------------------
-    class PerformanceCommonClass : DataSegmentClass
+    //                                                  DataSegment base class                                                                  |
+    //==========================================================================================================================================|
+    abstract class DataSegment<T> where T : Enum 
     {
-        // Performance Common Parameters
-        public enum PerformanceCommonParameters
-        {
-            PerformanceName = 0x00,     // 00
+        //public event EventHandler<SegmentChangedEventArgs> OnBufferChangedHandler = null;
 
-            EFXSource = 0x0C,           // 0C
-            EFXType,                    // 0D
-            EFXParameter1,              // 0E
-            EFXParameter2,              // 0F
-            EFXParameter3,              // 10
-            EFXParameter4,              // 11
-            EFXParameter5,              // 12
-            EFXParameter6,              // 13
-            EFXParameter7,              // 14
-            EFXParameter8,              // 15
-            EFXParameter9,              // 16
-            EFXParameter10,             // 17
-            EFXParameter11,             // 18
-            EFXParameter12,             // 19
-            EFXOutputAssign,            // 1A
-            EFXMixOutSendLevel,         // 1B
-            EFXChorusSendLevel,         // 1C
-            EFXReverbSendLevel,         // 1D
-            EFXControlSource1,          // 1E
-            EFXControlDepth1,           // 1F
-            EFXControlSource2,          // 20
-            EFXControlDepth2,           // 21
-            ChorusLevel,                // 22
-            ChorusRate,                 // 23
-            ChorusDepth,                // 24
-            ChorusPreDelay,             // 25
-            ChorusFeedback,             // 26
-            ChorusOutput,               // 27
-            ReverbType,                 // 28
-            ReverbLevel,                // 29
-            ReverbTime,                 // 2A
-            ReverbHPDump,               // 2B
-            DelayFeedback,              // 2C
-
-            PerformanceTempo = 0x2D,    // 2D
-
-            KeyboardRangeSwitch = 0x2F, // 2F
-
-            KeyboardMode = 0x40,        // 40
-            ClockSource                 // 41
-        }
-
-        // Parameters Manager
-        private Dictionary<PerformanceCommonParameters, OneParameterFieldManager> parametersManager;
-
+        //------------------------------- DATA -------------------------------
+        // id
+        protected readonly int segmentId = -1;
+        // ID
+        public int SegmentID { get { return segmentId; } }
+        // Main Segment Address
+        protected readonly uint segmentAddress;
+        // Main Segment Address getter
+        public uint SegmentAddress { get { return segmentAddress; } }
         // Structure
-        PERFORMANCE_COMMON performanceCommonData;
-
+        protected SEGMENT_BUFFER segmentData;
         // Structure Length
-        public override uint Length
+        public uint Length
         {
-            get { return (uint)Marshal.SizeOf(performanceCommonData); }
+            get { return (uint)segmentData.Length; }
         }
 
-        // Constructor
-        public PerformanceCommonClass(uint segAddr) : base(segAddr)
+        //-----------------------  Event List  -------------------------------
+        // Event List
+        EventList<T> eventList;
+
+        //----------------------- Parameter Manager --------------------------
+        // Parameters Manager
+        protected Dictionary<T, OneParameterFieldManager<T>> parametersManager;
+        // Modified Fields
+        protected List<OneParameterFieldManager<T>> modified = new List<OneParameterFieldManager<T>>();
+        public List<OneParameterFieldManager<T>> Modified
         {
-            performanceCommonData = new PERFORMANCE_COMMON();
+            get { return modified; }
+        }
+
+        //--------------------------------------------------------------------
+        // Constructor
+        public DataSegment(uint addr, int len, int identifyNumber)
+        {
+            segmentId = identifyNumber;
+            segmentAddress = addr;
+            segmentData = new SEGMENT_BUFFER(len);
             ParametersManagerInit();
+            eventList = new EventList<T>();
         }
 
         // Parameters Manager Init
-        private void ParametersManagerInit()
+        protected abstract void ParametersManagerInit();
+        
+        //----------------------- Data operations ----------------------------
+        // Data Array -> Structure
+        public void CopyDataToStructure(byte[] data)
         {
-            foreach(PerformanceCommonParameters par in Enum.GetValues(typeof(PerformanceCommonParameters)))
+            CopyDataToStructure(data, 0);
+        }
+
+        // Data Array -> Structure at Address
+        public void CopyDataToStructure(byte[] data, int offset)
+        {
+            Array.Copy(data, 0, segmentData.Buffer, offset, data.Length);
+            SendParametersToSubScribers();
+        }
+
+        // Structure -> Data Array
+        public byte[] ToByteArray()
+        {
+            int length = segmentData.Length;
+            byte[] data = new byte[length];
+            Array.Copy(segmentData.Buffer, data, length);
+
+            return data;
+        }
+
+        //-------------------------------  Roland  ------------------------------------
+        // Send
+        public void SendData(IPerformanceMIDIInOutInterface commander)
+        {
+            commander.SendData(segmentAddress, ToByteArray());
+        }
+
+        // Request
+        public void RequestData(IPerformanceMIDIInOutInterface commander)
+        {
+            commander.RequestData(segmentAddress, Length);
+        }
+
+        //---------------------------  Parameter section  -----------------------------
+        // Set Parameter in Parameter Field
+        public void SetParameterInField(T param, byte[] value)
+        {
+            OneParameterFieldManager<T> field = parametersManager[param];
+            int len = field.Length;
+            field.ParameterValue = value;
+        }
+
+        // Copy Parameter in Structure
+        public void CopyParameterIntoStructure(T param) 
+        {
+            OneParameterFieldManager<T> field = parametersManager[param];
+            CopyDataToStructure(field.ParameterValue, field.Offset);
+        }
+
+        // Send Parameter to Roland
+        public void SendParameter(T param, IPerformanceMIDIInOutInterface commander)
+        {
+            uint addr = segmentAddress + (uint)parametersManager[param].Offset;
+            commander.SendData(addr, parametersManager[param].ParameterValue);
+        }
+
+        //------------------------------  From Roland  --------------------------------
+        // Reset Modified
+        private void ResetModified()
+        {
+            modified.Clear();
+        }
+
+        // Scan Structure. Find non equal parameters. Copy parameters.
+        private void ScanModifiedParameters()
+        {
+            ResetModified();
+
+            foreach (T param in Enum.GetValues(typeof(T))) 
             {
-                int length = 1;
-                if (par == PerformanceCommonParameters.PerformanceName) length = 12;
-                if (par == PerformanceCommonParameters.PerformanceTempo) length = 2;
-                int offset = (int)par;
-                OneParameterFieldManager item = new OneParameterFieldManager(offset, length);
-                parametersManager.Add(par, item);
+                OneParameterFieldManager<T> field = parametersManager[param];
+                int len = field.Length;
+                int off = field.Offset;
+                bool equal = true;
+                for (int i = 0; i < len; i++)
+                {
+                    if (segmentData[off + i] != field.ParameterValue[i])
+                    {
+                        equal = false;
+                    }
+                }
+                if (!equal)
+                {
+                    byte[] buf = new byte[len];
+                    Array.Copy(segmentData.Buffer, off, buf, 0, len);
+                    field.ParameterValue = buf;
+                    modified.Add(field);
+                }
             }
         }
 
-        // Data Array -> Structure
-        public void CopyDataToStructure(byte[] data)
+        // Find All Subscribers
+        private void FindSubscribers()
         {
-            GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-            PERFORMANCE_COMMON temp = (PERFORMANCE_COMMON)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(PERFORMANCE_COMMON));
-            handle.Free();
-            performanceCommonData = temp;
+            foreach(EventHandler<ModifiedParameterFieldsEventArgs<T>> eHandler in eventList.GetKeys())
+            {
+                foreach(T prm in eventList[eHandler])
+                {
+                    foreach(OneParameterFieldManager<T> prmManager in modified)
+                    {
+                        //if (prm == prmManager.Parameter)
+                        if (Enum.GetName(typeof(T), prm) == Enum.GetName(typeof(T), prmManager.Parameter))
+                        {
+                            eHandler?.Invoke(this, new ModifiedParameterFieldsEventArgs<T>(segmentId, prm, prmManager.ParameterValue));
+                        }
+                    }
+                }
+            }
         }
 
-        // Structure -> Data Array
-        public override byte[] ToByteArray()
+        // Send Parameters to Subscribers
+        private void SendParametersToSubScribers()
         {
-            int rawsize = Marshal.SizeOf(performanceCommonData);
-            IntPtr buffer = Marshal.AllocHGlobal(rawsize);
-            Marshal.StructureToPtr(performanceCommonData, buffer, false);
-            byte[] rawdata = new byte[rawsize];
-            Marshal.Copy(buffer, rawdata, 0, rawsize);
-            Marshal.FreeHGlobal(buffer);
-            return rawdata;
+            ScanModifiedParameters();
+            FindSubscribers();
         }
 
-        // Send
-        public override void SendData(IPerformanceMIDIInOutInterface commander)
+        //-----------------------------  From Subscriber  -----------------------------
+        // Receive Parameter
+        private void StoreParameter(T param, byte[] value, IPerformanceMIDIInOutInterface commander)
         {
-            commander.SendData(segmentAddress, ToByteArray());
+            SetParameterInField(param, value);
+            CopyParameterIntoStructure(param);
+            SendParameter(param, commander);
+        }
+        
+        // Request Parameters Callback
+        public void RequestCallback(EventHandler<ModifiedParameterFieldsEventArgs<T>> eHandler, T[] prs)
+        {
+            eventList.AddCallback(eHandler, prs);
         }
 
-        // Request
-        public override void RequestData(IPerformanceMIDIInOutInterface commander)
+        // Set Parameter
+        public void SetParameter(EventHandler<ModifiedParameterFieldsEventArgs<T>> id, T parameter, byte[] value, IPerformanceMIDIInOutInterface commander)
         {
-            //requested = true;
-            commander.RequestData(segmentAddress, Length);
+            StoreParameter(parameter, value, commander);
+            foreach (EventHandler<ModifiedParameterFieldsEventArgs<T>> eHandler in eventList.GetKeys())
+            {
+                foreach (T prm in eventList[eHandler])
+                {
+                    if (Enum.GetName(typeof(T), prm) == Enum.GetName(typeof(T), parameter))
+                    {
+                        if (eHandler != id)
+                        {
+                            eHandler?.Invoke(this, new ModifiedParameterFieldsEventArgs<T>(segmentId, parameter, value));
+                        }
+                    }
+
+                }
+            }
         }
     }
 
-    // -------------------------------------------------  Performance Part Data Class  ---------------------------------------------------------------
-    class PerformancePartClass : DataSegmentClass
+    // *********************************************  Performance Common Data Class  ************************************************************
+    class PerformanceCommonClass : DataSegment<PERFORMANCE_COMMON_PARAMETERS>
     {
-        // Structure
-        PERFORMANCE_PART performancePartData;
-
-        // Structure Length
-        public override uint Length
-        {
-            get { return (uint)Marshal.SizeOf(performancePartData); }
-        }
+        // delegate
+        public delegate void SegmentParametersModifiedEventHandler(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS> e);
 
         // Constructor
-        public PerformancePartClass(uint segAddr) : base(segAddr)
+        public PerformanceCommonClass(uint segAddr) : base(segAddr, 0x42, 16) {}
+
+        // Parameters Manager Init
+        protected override void ParametersManagerInit()
         {
-            performancePartData = new PERFORMANCE_PART();
+            parametersManager = new Dictionary<PERFORMANCE_COMMON_PARAMETERS, OneParameterFieldManager<PERFORMANCE_COMMON_PARAMETERS>>();
+            foreach (PERFORMANCE_COMMON_PARAMETERS par in Enum.GetValues(typeof(PERFORMANCE_COMMON_PARAMETERS)))
+            {
+                int length = 1;
+                if (par == PERFORMANCE_COMMON_PARAMETERS.PerformanceName) length = 12;
+                if (par == PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo) length = 2;
+                int offset = (int)par;
+
+                OneParameterFieldManager<PERFORMANCE_COMMON_PARAMETERS> item = new OneParameterFieldManager<PERFORMANCE_COMMON_PARAMETERS>(par, offset, length);
+                parametersManager.Add(par, item);
+            }
+        }
+    }
+
+    // *************************************************  Performance Part Data Class  **********************************************************
+    class PerformancePartClass : DataSegment<PERFORMANCE_PART_PARAMETERS>
+    {
+        // delegate
+        public delegate void SegmentParametersModifiedEventHandler(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS> e);
+
+        // Constructor
+        public PerformancePartClass(uint segAddr, int identifyNumber) : base(segAddr, 0x19, identifyNumber) { }
+
+        // Parameters Manager Init
+        protected override void ParametersManagerInit()
+        {
+            parametersManager = new Dictionary<PERFORMANCE_PART_PARAMETERS, OneParameterFieldManager<PERFORMANCE_PART_PARAMETERS>>();
+            foreach (PERFORMANCE_PART_PARAMETERS par in Enum.GetValues(typeof(PERFORMANCE_PART_PARAMETERS)))
+            {
+                int length = 1;
+                if (par == PERFORMANCE_PART_PARAMETERS.PatchNumber) length = 4;
+                if (par == PERFORMANCE_PART_PARAMETERS.TransmitVolume) length = 2;
+                int offset = (int)par;
+                OneParameterFieldManager<PERFORMANCE_PART_PARAMETERS> item = new OneParameterFieldManager<PERFORMANCE_PART_PARAMETERS>(par, offset, length);
+                parametersManager.Add(par, item);
+            }
+        }
+    }
+
+    //                                                            Event List                                                                    |
+    //===========================================================================================================================================
+    class EventList<T> where T : Enum
+    {
+        Dictionary<EventHandler<ModifiedParameterFieldsEventArgs<T>>, T[]> eventList = new Dictionary<EventHandler<ModifiedParameterFieldsEventArgs<T>>, T[]>();
+
+        public Dictionary<EventHandler<ModifiedParameterFieldsEventArgs<T>>, T[]>.KeyCollection GetKeys()
+        {
+            return eventList.Keys;
         }
 
-        // Data Array -> Structure
-        public void CopyDataToStructure(byte[] data)
+        public T[] this[EventHandler<ModifiedParameterFieldsEventArgs<T>> evnt]
         {
-            GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-            PERFORMANCE_PART temp = (PERFORMANCE_PART)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(PERFORMANCE_PART));
-            handle.Free();
-            performancePartData = temp;
+            get { return eventList[evnt]; }
         }
 
-        // Structure -> Data Array
-        public override byte[] ToByteArray()
+        public EventHandler<ModifiedParameterFieldsEventArgs<T>> AddCallback(EventHandler<ModifiedParameterFieldsEventArgs<T>> eHandler, T[] prs)
         {
-            int rawsize = Marshal.SizeOf(performancePartData);
-            IntPtr buffer = Marshal.AllocHGlobal(rawsize);
-            Marshal.StructureToPtr(performancePartData, buffer, false);
-            byte[] rawdata = new byte[rawsize];
-            Marshal.Copy(buffer, rawdata, 0, rawsize);
-            Marshal.FreeHGlobal(buffer);
-            return rawdata;
-        }
-
-        // Send
-        public override void SendData(IPerformanceMIDIInOutInterface commander)
-        {
-            commander.SendData(segmentAddress, ToByteArray());
-        }
-
-        // Request
-        public override void RequestData(IPerformanceMIDIInOutInterface commander)
-        {
-            //requested = true;
-            commander.RequestData(segmentAddress, Length);
+            eventList.Add(eHandler, prs);
+            return eHandler;
         }
     }
 }

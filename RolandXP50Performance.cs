@@ -4,8 +4,9 @@ using SynthLiveMidiController.MIDIMessages;
 
 namespace SynthLiveMidiController.InstrumentList.Roland.XP50
 {
+    // *******************************************************************************************************************************************************
     // **********************************************************  ALL PERFORMANCE DATA CLASS  ***************************************************************
-    class RolandXP50Performance // : ISongListStorageSectionInterface, IFastListStorageSectionInterface, ISongListEditorSectionInterface, IFastListEditorSectionInterface
+    class RolandXP50Performance 
     {
         //----------------------------------------  DATA  -----------------------------------------------------
         private readonly PerformanceCommonClass performanceCommon;          // Performance common structure
@@ -23,8 +24,41 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
             performancePartList = new List<PerformancePartClass>();
             for (int i = 0; i < RolandXP50Constants.MIDIChannelCount; i++)
             {
-                performancePartList.Add(new PerformancePartClass(performanceAddress + 0x1000u + 0x100u * (uint)i));
+                performancePartList.Add(new PerformancePartClass(performanceAddress + 0x1000u + 0x100u * (uint)i, i));
             }
+        }
+
+        // ===================================================  PARAMETERS SECTION  =============================================================
+        // Request Parameter from Performance Common Segment
+        public void RequestParameters(
+            EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS>> eHandler, 
+            PERFORMANCE_COMMON_PARAMETERS[] prs)
+        {
+            performanceCommon.RequestCallback(eHandler, prs);
+        }
+
+        // Request Parameter from Performance Part Segment
+        public void RequestParameters(
+            EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS>> eHandler,
+            PERFORMANCE_PART_PARAMETERS[] prs)
+        {
+            EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS>> id;
+            for (int i = 0; i < RolandXP50Constants.MIDIChannelCount; i++)
+            {
+                performancePartList[i].RequestCallback(eHandler, prs);
+            }
+        }
+
+        // Set Parameter into Performance Common Segment
+        public void SetParameter(EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS>> id, PERFORMANCE_COMMON_PARAMETERS parameter, byte[] value)
+        {
+            performanceCommon.SetParameter(id, parameter, value, commander);
+        }
+
+        // Set Parameter into Performance Part Segment
+        public void SetParameter(EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS>> id, PERFORMANCE_PART_PARAMETERS parameter, int channel, byte[] value)
+        {
+            performancePartList[channel].SetParameter(id, parameter, value, commander);
         }
 
         // Detect target of message AND Copy data to structure
@@ -183,7 +217,6 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
         // Get Performance Common
         private byte[] GetPerformanceCommon()
         {
-            //while (performanceCommon.Requested) { };
             return performanceCommon.ToByteArray();
         }
 

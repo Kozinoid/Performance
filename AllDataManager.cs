@@ -1,35 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using SynthLiveMidiController.MIDIMessages;
 
 namespace SynthLiveMidiController.InstrumentList.Roland.XP50
 {
-    //--------------------------------  All Fields MAnager  -----------------------------------
-    class SegmentManager
+    //--------------------------------------  All Fields MAnager  ---------------------------------------------
+    class AllDataManager : IParametersManager
     {
-        public event SegmentDataReceivedHandler SongDataReceived;
-        public event SegmentDataReceivedHandler FastDataReceived;
+        // Modified Event
+        //public event ParametersModifiedEventHandler OnParameterModified = null;
 
         //----------------------------------------  DATA  -----------------------------------------------------
-        RolandXP50Performance performance;
-        RolandXP50Commands commands;
+        private RolandXP50Performance performance;
+        //RolandXP50Commands commands;
         private readonly IPerformanceMIDIInOutInterface commander;          // Command Collection
 
         // Constructor
-        public SegmentManager(IPerformanceMIDIInOutInterface cmd)
+        public AllDataManager(IPerformanceMIDIInOutInterface cmd)
         {
             commander = cmd;
 
             performance = new RolandXP50Performance(RolandXP50Constants.TemporaryPerformanceAddress, commander);
-            commands = new RolandXP50Commands(commander);
+            //commands = new RolandXP50Commands(commander);
 
             commander.OnChannelEvent += Commander_OnChannelEvent;
             commander.OnSysExEditDataEvent += Commander_OnSysExEditDataEvent;
             commander.OnSysExRquestedDataEvent += Commander_OnSysExRquestedDataEvent;
+        }
+
+        //=======================================================================================================================================
+        public void RequestAllPerformanceData()
+        {
+            performance.RequestPerformance();
         }
 
         //|                                                        CALLBACK SECTION                                                             |
@@ -100,14 +102,36 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
         {
             SystemExclusiveBaseClass msg = new SystemExclusiveBaseClass(e.Buffer);
             int target = performance.DetectTarget(msg);
-            if ((target >= 0) && (target < RolandXP50Constants.SongChannelCount) || (target == 16)) SongDataReceived?.Invoke(sender, new SegmentDataReceivedEvendArgs(target));
-            else if ((target >= RolandXP50Constants.SongChannelCount) && (target < RolandXP50Constants.SongChannelCount + RolandXP50Constants.FastChannelCount)) FastDataReceived?.Invoke(sender, new SegmentDataReceivedEvendArgs(target));
-            else
-            {
-                // Other Segment
-                //Console.WriteLine("Other segment");
-            }
         }
 
+        // ====================================================  INTERFACE SECTION  =============================================================
+        public void RequestParameters(EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS>> eHandler, PERFORMANCE_COMMON_PARAMETERS[] parameters)
+        {
+            performance.RequestParameters(eHandler, parameters);
+        }
+
+        public void RequestParameters(EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS>> eHandler, PERFORMANCE_PART_PARAMETERS[] parameters)
+        {
+            performance.RequestParameters(eHandler, parameters);
+        }
+
+        public void SetParameter(EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS>> id, PERFORMANCE_COMMON_PARAMETERS parameter, byte[] value)
+        {
+            performance.SetParameter(id, parameter, value);
+        }
+
+        public void SetParameter(EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS>> id, PERFORMANCE_PART_PARAMETERS parameter, int channel, byte[] value)
+        {
+            performance.SetParameter(id, parameter, channel, value);
+        }
+    }
+
+    //======================================================================================================================================|
+    interface IParametersManager
+    {
+        void RequestParameters(EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS>> eHandler, PERFORMANCE_COMMON_PARAMETERS[] parameters);
+        void RequestParameters(EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS>> eHandler, PERFORMANCE_PART_PARAMETERS[] parameters);
+        void SetParameter(EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS>> id, PERFORMANCE_COMMON_PARAMETERS parameter, byte[] value);
+        void SetParameter(EventHandler<ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS>> id, PERFORMANCE_PART_PARAMETERS parameter, int channel, byte[] value);
     }
 }

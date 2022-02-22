@@ -1,158 +1,117 @@
-﻿using System.Runtime.InteropServices;
-
+﻿using System;
 
 namespace SynthLiveMidiController.InstrumentList.Roland.XP50
 {
-    //========================================================================================================
-    //************************************  Performance Common  ********************************************//
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct PERFORMANCE_COMMON
+    //                                                                   EVENTS                                                                 |
+    //===========================================================================================================================================
+    // Modified Parameters Event Args
+    public class ModifiedParameterFieldsEventArgs<T> : EventArgs where T : Enum
     {
-        public byte PerformanceName1;
-        public byte PerformanceName2;
-        public byte PerformanceName3;
-        public byte PerformanceName4;
-        public byte PerformanceName5;
-        public byte PerformanceName6;
-        public byte PerformanceName7;
-        public byte PerformanceName8;
-        public byte PerformanceName9;
-        public byte PerformanceName10;
-        public byte PerformanceName11;
-        public byte PerformanceName12;
+        //private OneParameterFieldManager<T>[] modifiedParameters;
+        private int segment;
+        private T parameter;
+        private byte[] value;
 
-        public EFXSource EFXSource;
-        public byte EFXType;
-        public byte EFXParameter1;
-        public byte EFXParameter2;
-        public byte EFXParameter3;
-        public byte EFXParameter4;
-        public byte EFXParameter5;
-        public byte EFXParameter6;
-        public byte EFXParameter7;
-        public byte EFXParameter8;
-        public byte EFXParameter9;
-        public byte EFXParameter10;
-        public byte EFXParameter11;
-        public byte EFXParameter12;
-        public EFXOutputAssign EFXOutputAssign;
-        public byte EFXMixOutSendLevel;
-        public byte EFXChorusSendLevel;
-        public byte EFXReverbSendLevel;
-        public EFXControlSource EFXControlSource1;
-        public byte EFXControlDepth1;
-        public EFXControlSource EFXControlSource2;
-        public byte EFXControlDepth2;
+        //public OneParameterFieldManager<T>[] ModifiedParameters { get { return modifiedParameters; } }
+        public int Segment { get { return segment; } }
+        public T Parameter { get { return parameter; } }
+        public byte[] Value { get { return value; } }
 
-        public byte ChorusLevel;
-        public byte ChorusRate;
-        public byte ChorusDepth;
-        public byte ChorusPreDelay;
-        public byte ChorusFeedback;
-        public ChorusOutput ChorusOutput;
-
-        public ReverbType ReverbType;
-        public byte ReverbLevel;
-        public byte ReverbTime;
-        public ReverbHPDump ReverbHPDump;
-        public byte DelayFeedback;
-
-        public byte PerformanceTempoMSB;
-        public byte PerformanceTempoLSB;
-        public KeyboardRangeSwitch KeyboardRangeSwitch;
-
-        public byte VoiceReserve1;
-        public byte VoiceReserve2;
-        public byte VoiceReserve3;
-        public byte VoiceReserve4;
-        public byte VoiceReserve5;
-        public byte VoiceReserve6;
-        public byte VoiceReserve7;
-        public byte VoiceReserve8;
-        public byte VoiceReserve9;
-        public byte VoiceReserve10;
-        public byte VoiceReserve11;
-        public byte VoiceReserve12;
-        public byte VoiceReserve13;
-        public byte VoiceReserve14;
-        public byte VoiceReserve15;
-        public byte VoiceReserve16;
-
-        public KeyboardMode KeyboardMode;
-        public ClockSource ClockSource;
-
-        //-------------------------------------  SECOND BUFFER (Fields Manager)  --------------------------------------------
-
+        public ModifiedParameterFieldsEventArgs(int target, T par, byte[] val)
+        {
+            segment = target;
+            parameter = par;
+            value = val;
+        }
     }
 
-    //*************************  Performance Common parameters  *****************************
-    public enum EFXSource : byte
+    public class SegmentChangedEventArgs : EventArgs
     {
-        PERFORM, Part1, Part2, Part3, Part4, Part5, Part6, Part7, Part8, Part9,
-        Part11, Part12, Part13, Part14, Part15, Part16
-    };
-    public enum EFXOutputAssign : byte { MIX, OUTPUT1, OUTPUT2 };
-    public enum EFXControlSource : byte { OFF, SYS_CTRL1, SYS_CTRL2, MODULATION, BREATH, FOOT, VOLUME, PAN, EXPRESSION, BENDER, AFTERTOUCH };
-    public enum ChorusOutput : byte { MIX, REV, MIX_REV };
-    public enum ReverbType : byte { ROOM1, ROOM2, STAGE1, STAGE2, HALL1, HALL2, DELAY, PAN_DELAY };
-    public enum ReverbHPDump : byte
-    {
-        HPDump200, HPDump250, HPDump315, HPDump400, HPDump500, HPDump630, HPDump800,
-        HPDump1000, HPDump1250, HPDump1600, HPDump2000, HPDump2500, HPDump3150, HPDump4000, HPDump5000, HPDump6300,
-        HPDump8000, HPDumpBYPASS
-    };
-    public enum KeyboardRangeSwitch : byte { OFF, ON };
-    public enum KeyboardMode : byte { LAYER, SINGLE };
-    public enum ClockSource : byte { PERFORMANCE, SEQUENCER };
-    //========================================================================================================
+        private int segment;
+        public int Segment { get { return segment; } }
 
-    //========================================================================================================
-    //************************************  Performance Part  **********************************************//
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-
-    public struct PERFORMANCE_PART
-    {
-        public RecieveSwitch RecieveSwitch;                             
-        public byte MIDIChannel;
-
-        public PathGroupType PathGroupType;
-        public byte PatchGroupID;
-        public byte PatchNumberMSB;
-        public byte PatchNumberLSB;
-
-        public byte PartLevel;
-        public byte PartPan;
-        public byte PartCoarseTune;
-        public byte PartFineTune;
-        public OutputAssign OutputAssign;
-        public byte MIXEFXSendLevel;
-        public byte ChorusSendLevel;
-        public byte ReverbSendLevel;
-
-        public RecieveProgramChangeSwitch RecieveProgramChangeSwitch;
-        public RecieveVolumeSwitch RecieveVolumeSwitch;
-        public RecieveHold1Switch RecieveHold1Switch;                   // + Variant
-        public byte KeyboardRangeLower;                                 // + Variant
-        public byte KeyboardRangeUpper;                                 // + Variant
-
-        public byte OctaveShift;                                        // + Variant
-        public LocalSwitch LocalSwitch;                                 // + Variant
-        public TransmitSwitch TransmitSwitch;                           
-        public TransmitBankSelectGroup TransmitBankSelectGroup;
-        public byte TransmitVolumeMSB;
-        public byte TransmitVolumeLSB;
+        public SegmentChangedEventArgs(int target)
+        {
+            segment = target;
+        }
     }
 
-    //*************************  Performance Part parameters  *****************************
-    public enum RecieveSwitch : byte { OFF, ON };
-    public enum PathGroupType : byte { USER_PRESET, PCM, EXP };
-    public enum OutputAssign : byte { MIX, EFX, OUTPUT1, OUTPUT2, PATCH };
-    public enum RecieveProgramChangeSwitch : byte { OFF, ON };
-    public enum RecieveVolumeSwitch : byte { OFF, ON };
-    public enum RecieveHold1Switch : byte { OFF, ON };
-    public enum LocalSwitch : byte { OFF, ON };
-    public enum TransmitSwitch : byte { OFF, ON };
-    public enum TransmitBankSelectGroup : byte { PATCH, GROUP1, GROUP2, GROUP3, GROUP4, GROUP5, GROUP6, GROUP7 };
-    //========================================================================================================
+    // Performance Common Parameters
+    public enum PERFORMANCE_COMMON_PARAMETERS
+    {
+        PerformanceName = 0x00,     // 00
 
+        EFXSource = 0x0C,           // 0C
+        EFXType,                    // 0D
+        EFXParameter1,              // 0E
+        EFXParameter2,              // 0F
+        EFXParameter3,              // 10
+        EFXParameter4,              // 11
+        EFXParameter5,              // 12
+        EFXParameter6,              // 13
+        EFXParameter7,              // 14
+        EFXParameter8,              // 15
+        EFXParameter9,              // 16
+        EFXParameter10,             // 17
+        EFXParameter11,             // 18
+        EFXParameter12,             // 19
+        EFXOutputAssign,            // 1A
+        EFXMixOutSendLevel,         // 1B
+        EFXChorusSendLevel,         // 1C
+        EFXReverbSendLevel,         // 1D
+        EFXControlSource1,          // 1E
+        EFXControlDepth1,           // 1F
+        EFXControlSource2,          // 20
+        EFXControlDepth2,           // 21
+        ChorusLevel,                // 22
+        ChorusRate,                 // 23
+        ChorusDepth,                // 24
+        ChorusPreDelay,             // 25
+        ChorusFeedback,             // 26
+        ChorusOutput,               // 27
+        ReverbType,                 // 28
+        ReverbLevel,                // 29
+        ReverbTime,                 // 2A
+        ReverbHPDump,               // 2B
+        DelayFeedback,              // 2C
+
+        PerformanceTempo = 0x2D,    // 2D
+
+        KeyboardRangeSwitch = 0x2F, // 2F
+
+        KeyboardMode = 0x40,        // 40
+        ClockSource                 // 41
+    }
+
+    // Performance Part Parameters
+    public enum PERFORMANCE_PART_PARAMETERS
+    {
+        RecieveSwitch = 0x00,                   // 00                      
+        MIDIChannel,                            // 01
+
+        //PathGroupType,                        
+        //PatchGroupID,                         
+        PatchNumber,                            // 02
+
+        PartLevel = 0x06,                       // 06
+        PartPan,                                // 07
+        PartCoarseTune,                         // 08
+        PartFineTune,                           // 09
+        OutputAssign,                           // 0A
+        MIXEFXSendLevel,                        // 0B
+        ChorusSendLevel,                        // 0C
+        ReverbSendLevel,                        // 0D
+
+        RecieveProgramChangeSwitch,             // 0E
+        RecieveVolumeSwitch,                    // 0F
+        RecieveHold1Switch,                     // 10
+        KeyboardRangeLower,                     // 11
+        KeyboardRangeUpper,                     // 12
+
+        OctaveShift,                            // 13
+        LocalSwitch,                            // 14
+        TransmitSwitch,                         // 15
+        TransmitBankSelectGroup,                // 16
+        TransmitVolume                          // 17
+    }
 }

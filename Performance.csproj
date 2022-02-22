@@ -71,7 +71,6 @@
     <Compile Include="Arch\IMidiInOutInterface.cs" />
     <Compile Include="Arch\InstrumentMIDIMessages.cs" />
     <Compile Include="Arch\IPerformanceMIDIInOutInterface.cs" />
-    <Compile Include="IRolandXP50CommandsEditInterface.cs" />
     <Compile Include="Arch\MidiEvents.cs" />
     <Compile Include="Arch\MidiInOutDialog.cs">
       <SubType>Form</SubType>
@@ -85,14 +84,12 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Arch\RolandXP50Class.cs" />
-    <Compile Include="RolandXP50Commands.cs" />
     <Compile Include="RolandXP50Constants.cs" />
     <Compile Include="RolandXP50Data.cs" />
     <Compile Include="RolandXP50DataSegmentClass.cs" />
     <Compile Include="RolandXP50Performance.cs" />
-    <Compile Include="RolandXP50SongFastCommandClass.cs" />
     <Compile Include="Arch\SanfordMidiDevice.cs" />
-    <Compile Include="SegmentManager.cs" />
+    <Compile Include="AllDataManager.cs" />
     <Compile Include="TestClass.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
