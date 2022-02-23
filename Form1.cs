@@ -39,7 +39,7 @@ namespace Performance
         private void SetupDevices()
         {
             ShowSelectMidiDeviceDialog();                                   // Show Device In/Out Dialog
-            mainMidiDevice = new SanfordMidiDevice();            // Create MIDI Device
+            mainMidiDevice = new SanfordMidiDevice();                       // Create MIDI Device
             mainMidiDevice.InitDevices(midiInDevice, midiOutDevice);        // Init In/Out devices
 
             roland = new RolandXP50Class();                                 // Use Roland XP50 
@@ -49,6 +49,11 @@ namespace Performance
 
             manager = new AllDataManager(perfCommander);
 
+            SetupControl();
+        }
+
+        private void SetupControl()
+        {
             edA = new EditorA(manager);
             edB = new EditorB(manager);
             edC = new EditorC(manager);
@@ -270,34 +275,38 @@ namespace Performance
             performance = perf;
             commID = PerfCommonParametersChanged;
             partID = PerfPartParametersChanged;
-            performance.RequestParameters(PerfCommonParametersChanged, new PERFORMANCE_COMMON_PARAMETERS[] { PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo });
-            performance.RequestParameters(PerfPartParametersChanged, new PERFORMANCE_PART_PARAMETERS[] { PERFORMANCE_PART_PARAMETERS.ReverbSendLevel });
         }
 
         protected virtual void PerfCommonParametersChanged(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS> e)
         {
-            if (e.Parameter == PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo)
-            {
-                Tempo = (e.Value[0] << 4) + e.Value[1];
-                // Callback
-                //PerfCommonEventHandler?.Invoke(sender, e);
-            }
+            
         }
 
         protected virtual void PerfPartParametersChanged(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS> e)
         {
-            if (e.Parameter == PERFORMANCE_PART_PARAMETERS.ReverbSendLevel)
-            {
-                if (e.Segment == 0)
-                {
-                    Reverb = e.Value[0];
-                    // Callback
-                    //PerfPartEventHandler?.Invoke(sender, e);
-                }
-            }
+            
         }
 
         public virtual void SetPerfCommonParameter(PERFORMANCE_COMMON_PARAMETERS prm, int value)
+        {
+            
+        }
+
+        public virtual void SetPerfPartParameter(PERFORMANCE_PART_PARAMETERS prm, int channel, int value)
+        {
+            
+        }
+    }
+
+    class EditorA : Editor
+    {
+        public EditorA(IParametersManager perf) : base(perf) 
+        {
+            performance.RequestParameters(PerfCommonParametersChanged, new PERFORMANCE_COMMON_PARAMETERS[] { PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo });
+            performance.RequestParameters(PerfPartParametersChanged, new PERFORMANCE_PART_PARAMETERS[] { PERFORMANCE_PART_PARAMETERS.ReverbSendLevel });
+        }
+
+        public override void SetPerfCommonParameter(PERFORMANCE_COMMON_PARAMETERS prm, int value)
         {
             Tempo = value;
             byte[] valBuffer = new byte[2];
@@ -306,30 +315,158 @@ namespace Performance
             performance.SetParameter(commID, PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo, valBuffer);
         }
 
-        public virtual void SetPerfPartParameter(PERFORMANCE_PART_PARAMETERS prm, int channel, int value)
+        public override void SetPerfPartParameter(PERFORMANCE_PART_PARAMETERS prm, int channel, int value)
         {
             Reverb = value;
             performance.SetParameter(partID, PERFORMANCE_PART_PARAMETERS.ReverbSendLevel, 0, new byte[] { (byte)value });
         }
-    }
 
-    class EditorA : Editor
-    {
-        public EditorA(IParametersManager perf) : base(perf) { }
+        protected override void PerfCommonParametersChanged(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS> e)
+        {
+            if (e.Parameter == PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo)
+            {
+                Tempo = (e.Value[0] << 4) + e.Value[1];
+            }
+        }
+
+        protected override void PerfPartParametersChanged(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS> e)
+        {
+            if (e.Parameter == PERFORMANCE_PART_PARAMETERS.ReverbSendLevel)
+            {
+                if (e.Segment == 0)
+                {
+                    Reverb = e.Value[0];
+                }
+            }
+        }
     }
 
     class EditorB : Editor
     {
-        public EditorB(IParametersManager perf) : base(perf) { }
+        public EditorB(IParametersManager perf) : base(perf) 
+        {
+            performance.RequestParameters(PerfCommonParametersChanged, new PERFORMANCE_COMMON_PARAMETERS[] { PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo });
+            performance.RequestParameters(PerfPartParametersChanged, new PERFORMANCE_PART_PARAMETERS[] { PERFORMANCE_PART_PARAMETERS.ReverbSendLevel });
+        }
+
+        public override void SetPerfCommonParameter(PERFORMANCE_COMMON_PARAMETERS prm, int value)
+        {
+            Tempo = value;
+            byte[] valBuffer = new byte[2];
+            valBuffer[1] = (byte)(value & 0x0F);
+            valBuffer[0] = (byte)((value & 0xF0) >> 4);
+            performance.SetParameter(commID, PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo, valBuffer);
+        }
+
+        public override void SetPerfPartParameter(PERFORMANCE_PART_PARAMETERS prm, int channel, int value)
+        {
+            Reverb = value;
+            performance.SetParameter(partID, PERFORMANCE_PART_PARAMETERS.ReverbSendLevel, 0, new byte[] { (byte)value });
+        }
+
+        protected override void PerfCommonParametersChanged(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS> e)
+        {
+            if (e.Parameter == PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo)
+            {
+                Tempo = (e.Value[0] << 4) + e.Value[1];
+            }
+        }
+
+        protected override void PerfPartParametersChanged(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS> e)
+        {
+            if (e.Parameter == PERFORMANCE_PART_PARAMETERS.ReverbSendLevel)
+            {
+                if (e.Segment == 0)
+                {
+                    Reverb = e.Value[0];
+                }
+            }
+        }
     }
 
     class EditorC : Editor
     {
-        public EditorC(IParametersManager perf) : base(perf) { }
+        public EditorC(IParametersManager perf) : base(perf) 
+        {
+            performance.RequestParameters(PerfCommonParametersChanged, new PERFORMANCE_COMMON_PARAMETERS[] { PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo });
+            performance.RequestParameters(PerfPartParametersChanged, new PERFORMANCE_PART_PARAMETERS[] { PERFORMANCE_PART_PARAMETERS.ReverbSendLevel });
+        }
+
+        public override void SetPerfCommonParameter(PERFORMANCE_COMMON_PARAMETERS prm, int value)
+        {
+            Tempo = value;
+            byte[] valBuffer = new byte[2];
+            valBuffer[1] = (byte)(value & 0x0F);
+            valBuffer[0] = (byte)((value & 0xF0) >> 4);
+            performance.SetParameter(commID, PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo, valBuffer);
+        }
+
+        public override void SetPerfPartParameter(PERFORMANCE_PART_PARAMETERS prm, int channel, int value)
+        {
+            Reverb = value;
+            performance.SetParameter(partID, PERFORMANCE_PART_PARAMETERS.ReverbSendLevel, 1, new byte[] { (byte)value });
+        }
+
+        protected override void PerfCommonParametersChanged(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS> e)
+        {
+            if (e.Parameter == PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo)
+            {
+                Tempo = (e.Value[0] << 4) + e.Value[1];
+            }
+        }
+
+        protected override void PerfPartParametersChanged(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS> e)
+        {
+            if (e.Parameter == PERFORMANCE_PART_PARAMETERS.ReverbSendLevel)
+            {
+                if (e.Segment == 1)
+                {
+                    Reverb = e.Value[0];
+                }
+            }
+        }
     }
 
     class EditorD : Editor
     {
-        public EditorD(IParametersManager perf) : base(perf) { }
+        public EditorD(IParametersManager perf) : base(perf) 
+        {
+            performance.RequestParameters(PerfCommonParametersChanged, new PERFORMANCE_COMMON_PARAMETERS[] { PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo });
+            performance.RequestParameters(PerfPartParametersChanged, new PERFORMANCE_PART_PARAMETERS[] { PERFORMANCE_PART_PARAMETERS.ReverbSendLevel });
+        }
+
+        public override void SetPerfCommonParameter(PERFORMANCE_COMMON_PARAMETERS prm, int value)
+        {
+            Tempo = value;
+            byte[] valBuffer = new byte[2];
+            valBuffer[1] = (byte)(value & 0x0F);
+            valBuffer[0] = (byte)((value & 0xF0) >> 4);
+            performance.SetParameter(commID, PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo, valBuffer);
+        }
+
+        public override void SetPerfPartParameter(PERFORMANCE_PART_PARAMETERS prm, int channel, int value)
+        {
+            Reverb = value;
+            performance.SetParameter(partID, PERFORMANCE_PART_PARAMETERS.ReverbSendLevel, 1, new byte[] { (byte)value });
+        }
+
+        protected override void PerfCommonParametersChanged(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS> e)
+        {
+            if (e.Parameter == PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo)
+            {
+                Tempo = (e.Value[0] << 4) + e.Value[1];
+            }
+        }
+
+        protected override void PerfPartParametersChanged(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS> e)
+        {
+            if (e.Parameter == PERFORMANCE_PART_PARAMETERS.ReverbSendLevel)
+            {
+                if (e.Segment == 1)
+                {
+                    Reverb = e.Value[0];
+                }
+            }
+        }
     }
 }

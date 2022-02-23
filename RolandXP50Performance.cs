@@ -126,15 +126,15 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
         }
 
         // MIDI Commander: Request Performance Common (Roland -> Performance Common Structure)
-        public void RequestPerformanceCommon()
+        public void RequestPerformanceCommon(bool all)
         {
-            performanceCommon.RequestData(commander);
+            performanceCommon.RequestData(commander, all);
         }
 
         // MIDI Commander: Request Performance Part (Roland -> Performance Part #channel Structure)
-        public void RequestPerformancePart(int channel)
+        public void RequestPerformancePart(int channel, bool all)
         {
-            performancePartList[channel].RequestData(commander);
+            performancePartList[channel].RequestData(commander, all);
         }
 
         //------------------------------------------------------  ALL PERFORMANCE DATA  --------------------------------------------------------|
@@ -151,10 +151,10 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
         // MIDI Commander: Request All Performance Data (Roland -> Performance Structure)
         public void RequestPerformance()
         {
-            RequestPerformanceCommon();
+            RequestPerformanceCommon(true);
             for (int i = 0; i < RolandXP50Constants.MIDIChannelCount; i++)
             {
-                RequestPerformancePart(i);
+                RequestPerformancePart(i, true);
             }
         }
 
@@ -172,10 +172,10 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
         // MIDI Commander: Request Song Data (Roland -> Performance Structure)
         public void RequestSongData()
         {
-            RequestPerformanceCommon();
+            RequestPerformanceCommon(false);
             for (int i = 0; i < RolandXP50Constants.SongChannelCount; i++)
             {
-                RequestPerformancePart(i);
+                RequestPerformancePart(i, false);
             }
         }
 
@@ -194,7 +194,7 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
         {
             for (int i = RolandXP50Constants.SongChannelCount; i < RolandXP50Constants.FastChannelCount; i++)
             {
-                RequestPerformancePart(i);
+                RequestPerformancePart(i, false);
             }
         }
 

@@ -137,10 +137,12 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
         }
 
         // Data Array -> Structure at Address
+        bool scanAll = false;
         public void CopyDataToStructure(byte[] data, int offset)
         {
             Array.Copy(data, 0, segmentData.Buffer, offset, data.Length);
-            SendParametersToSubScribers();
+            SendParametersToSubScribers(scanAll);
+            scanAll = false;
         }
 
         // Structure -> Data Array
@@ -161,8 +163,9 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
         }
 
         // Request
-        public void RequestData(IPerformanceMIDIInOutInterface commander)
+        public void RequestData(IPerformanceMIDIInOutInterface commander, bool all)
         {
+            scanAll = all;
             commander.RequestData(segmentAddress, Length);
         }
 
@@ -224,6 +227,24 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
             }
         }
 
+        // Scan All Parameters
+        private void ScanAllParameters()
+        {
+            ResetModified();
+
+            foreach (T param in Enum.GetValues(typeof(T)))
+            {
+                OneParameterFieldManager<T> field = parametersManager[param];
+                int len = field.Length;
+                int off = field.Offset;
+
+                byte[] buf = new byte[len];
+                Array.Copy(segmentData.Buffer, off, buf, 0, len);
+                field.ParameterValue = buf;
+                modified.Add(field);
+            }
+        }
+
         // Find All Subscribers
         private void FindSubscribers()
         {
@@ -244,9 +265,16 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
         }
 
         // Send Parameters to Subscribers
-        private void SendParametersToSubScribers()
+        private void SendParametersToSubScribers(bool all)
         {
-            ScanModifiedParameters();
+            if (all) ScanAllParameters(); else ScanModifiedParameters();
+            FindSubscribers();
+        }
+
+        // Refresh All Parameters
+        public void RefreshAllParameters()
+        {
+            ScanAllParameters();
             FindSubscribers();
         }
 
@@ -289,22 +317,39 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
     // *********************************************  Performance Common Data Class  ************************************************************
     class PerformanceCommonClass : DataSegment<PERFORMANCE_COMMON_PARAMETERS>
     {
+        // Structure Length
+        const int PerformanceCommonStructureLength = 0x42;
+
         // delegate
         public delegate void SegmentParametersModifiedEventHandler(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_COMMON_PARAMETERS> e);
 
         // Constructor
-        public PerformanceCommonClass(uint segAddr) : base(segAddr, 0x42, 16) {}
+        public PerformanceCommonClass(uint segAddr) : base(segAddr, PerformanceCommonStructureLength, 16) {}
 
         // Parameters Manager Init
         protected override void ParametersManagerInit()
         {
+            //parametersManager = new Dictionary<PERFORMANCE_COMMON_PARAMETERS, OneParameterFieldManager<PERFORMANCE_COMMON_PARAMETERS>>();
+            //foreach (PERFORMANCE_COMMON_PARAMETERS par in Enum.GetValues(typeof(PERFORMANCE_COMMON_PARAMETERS)))
+            //{
+            //    int length = 1;
+            //    if (par == PERFORMANCE_COMMON_PARAMETERS.PerformanceName) length = 12;
+            //    if (par == PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo) length = 2;
+            //    int offset = (int)par;
+
+            //    OneParameterFieldManager<PERFORMANCE_COMMON_PARAMETERS> item = new OneParameterFieldManager<PERFORMANCE_COMMON_PARAMETERS>(par, offset, length);
+            //    parametersManager.Add(par, item);
+            //}
+
             parametersManager = new Dictionary<PERFORMANCE_COMMON_PARAMETERS, OneParameterFieldManager<PERFORMANCE_COMMON_PARAMETERS>>();
-            foreach (PERFORMANCE_COMMON_PARAMETERS par in Enum.GetValues(typeof(PERFORMANCE_COMMON_PARAMETERS)))
+            int parametersCount = Enum.GetValues(typeof(PERFORMANCE_COMMON_PARAMETERS)).Length;
+            Array addresses = Enum.GetValues(typeof(PERFORMANCE_COMMON_PARAMETERS));
+            //int[] lengthes = new int[parametersCount];
+            for (int i = 0; i < parametersCount; i++)
             {
-                int length = 1;
-                if (par == PERFORMANCE_COMMON_PARAMETERS.PerformanceName) length = 12;
-                if (par == PERFORMANCE_COMMON_PARAMETERS.PerformanceTempo) length = 2;
-                int offset = (int)par;
+                int length = (i == (parametersCount - 1)) ? PerformanceCommonStructureLength - (int)addresses.GetValue(i) : (int)addresses.GetValue(i + 1) - (int)addresses.GetValue(i);
+                int offset = (int)addresses.GetValue(i);
+                PERFORMANCE_COMMON_PARAMETERS par = (PERFORMANCE_COMMON_PARAMETERS)addresses.GetValue(i);
 
                 OneParameterFieldManager<PERFORMANCE_COMMON_PARAMETERS> item = new OneParameterFieldManager<PERFORMANCE_COMMON_PARAMETERS>(par, offset, length);
                 parametersManager.Add(par, item);
@@ -315,22 +360,39 @@ namespace SynthLiveMidiController.InstrumentList.Roland.XP50
     // *************************************************  Performance Part Data Class  **********************************************************
     class PerformancePartClass : DataSegment<PERFORMANCE_PART_PARAMETERS>
     {
+        // Structure Length
+        const int PerformancePartStructureLength = 0x19;
+
         // delegate
         public delegate void SegmentParametersModifiedEventHandler(object sender, ModifiedParameterFieldsEventArgs<PERFORMANCE_PART_PARAMETERS> e);
 
         // Constructor
-        public PerformancePartClass(uint segAddr, int identifyNumber) : base(segAddr, 0x19, identifyNumber) { }
+        public PerformancePartClass(uint segAddr, int identifyNumber) : base(segAddr, PerformancePartStructureLength, identifyNumber) { }
 
         // Parameters Manager Init
         protected override void ParametersManagerInit()
         {
+            //parametersManager = new Dictionary<PERFORMANCE_PART_PARAMETERS, OneParameterFieldManager<PERFORMANCE_PART_PARAMETERS>>();
+            //foreach (PERFORMANCE_PART_PARAMETERS par in Enum.GetValues(typeof(PERFORMANCE_PART_PARAMETERS)))
+            //{
+            //    int length = 1;
+            //    if (par == PERFORMANCE_PART_PARAMETERS.PatchNumber) length = 4;
+            //    if (par == PERFORMANCE_PART_PARAMETERS.TransmitVolume) length = 2;
+            //    int offset = (int)par;
+            //    OneParameterFieldManager<PERFORMANCE_PART_PARAMETERS> item = new OneParameterFieldManager<PERFORMANCE_PART_PARAMETERS>(par, offset, length);
+            //    parametersManager.Add(par, item);
+            //}
+
             parametersManager = new Dictionary<PERFORMANCE_PART_PARAMETERS, OneParameterFieldManager<PERFORMANCE_PART_PARAMETERS>>();
-            foreach (PERFORMANCE_PART_PARAMETERS par in Enum.GetValues(typeof(PERFORMANCE_PART_PARAMETERS)))
+            int parametersCount = Enum.GetValues(typeof(PERFORMANCE_PART_PARAMETERS)).Length;
+            Array addresses = Enum.GetValues(typeof(PERFORMANCE_PART_PARAMETERS));
+            //int[] lengthes = new int[parametersCount];
+            for (int i = 0; i < parametersCount; i++)
             {
-                int length = 1;
-                if (par == PERFORMANCE_PART_PARAMETERS.PatchNumber) length = 4;
-                if (par == PERFORMANCE_PART_PARAMETERS.TransmitVolume) length = 2;
-                int offset = (int)par;
+                int length = (i == (parametersCount - 1)) ? PerformancePartStructureLength - (int)addresses.GetValue(i) : (int)addresses.GetValue(i + 1) - (int)addresses.GetValue(i);
+                int offset = (int)addresses.GetValue(i);
+                PERFORMANCE_PART_PARAMETERS par = (PERFORMANCE_PART_PARAMETERS)addresses.GetValue(i);
+
                 OneParameterFieldManager<PERFORMANCE_PART_PARAMETERS> item = new OneParameterFieldManager<PERFORMANCE_PART_PARAMETERS>(par, offset, length);
                 parametersManager.Add(par, item);
             }
